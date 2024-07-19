@@ -53,6 +53,11 @@ func (b *boodbood) Navigate(args []string) {
 			os.Exit(0)
 		}
 
+		if strings.Contains(args[0], "/") {
+			b.navigateTo(args[0])
+			return
+		}
+
 		b.getMatch(args[0])
 		return
 	}
