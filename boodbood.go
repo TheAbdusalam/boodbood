@@ -54,7 +54,8 @@ func (b *boodbood) Navigate(args []string) {
 		}
 
 		if strings.Contains(args[0], "/") {
-			b.navigateTo(args[0])
+			currentDir, _ := os.Getwd()
+			b.navigateTo(currentDir + "/" + args[0])
 			return
 		}
 
