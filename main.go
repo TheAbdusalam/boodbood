@@ -24,5 +24,5 @@ func init() {
 func main() {
 	bd := NewBoodBood(actionFile)
 	bd.Navigate(os.Args[1:])
-
+	bd.Close()
 }

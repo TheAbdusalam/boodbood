@@ -4,14 +4,14 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
 
-
 type Store struct {
-	store *os.File
-	nodes []DirectoryNode
+	storeFile *os.File
+	nodes     []DirectoryNode
 }
 
 func NewStore() *Store {
@@ -22,10 +22,10 @@ func NewStore() *Store {
 	}
 
 	s := &Store{
-		store: file,
+		storeFile: file,
 	}
- 
-	s.nodes = parseStore(s.store)
+
+	s.nodes = parseStore(s.storeFile)
 
 	return s
 }
@@ -44,20 +44,29 @@ func parseStore(file *os.File) (nodes []DirectoryNode) {
 		})
 	}
 
+	slices.SortFunc(nodes, func(a, b DirectoryNode) int {
+		if a.weight > b.weight {
+			return -1
+		} else if a.weight < b.weight {
+			return 1
+		}
+
+		return 0
+	})
+
 	return
 }
 
 func (s *Store) save() {
-	_ = s.store.Truncate(0)
-	_, _ = s.store.Seek(0, 0)
+	_ = s.storeFile.Truncate(0)
+	_, _ = s.storeFile.Seek(0, 0)
 
 	for _, node := range s.nodes {
-		_, _ = s.store.WriteString(node.String() + "\n")
+		_, err := s.storeFile.WriteString(node.String() + "\n")
+		if err != nil {
+			_ = fmt.Errorf("could not write to file: %v", err)
+		}
 	}
-}
-
-func (s *Store) Close() {
-	_ = s.store.Close()
 }
 
 func (s *Store) Visit(path string) error {
@@ -71,7 +80,7 @@ func (s *Store) Visit(path string) error {
 	}
 
 	node := DirectoryNode{
-		path: path,
+		path:   path,
 		weight: 0,
 	}
 

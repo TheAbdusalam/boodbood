@@ -39,3 +39,8 @@ $ make
 
 $ bd
 ```
+
+# Task list
+- [x] cd to child dirs
+- [x] list last 10 dirs with respect to weight
+- [] group dirs into trees and add folders as branches

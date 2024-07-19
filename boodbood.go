@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type boodbood struct {
@@ -11,13 +12,29 @@ type boodbood struct {
 }
 
 func NewBoodBood(actionFile string) *boodbood {
-	return &boodbood{
+	bd := &boodbood{
 		actionFile: actionFile,
 		store:      NewStore(),
 	}
+	return bd
+}
+
+func (b *boodbood) Close() {
+	_ = b.store.storeFile.Close()
 }
 
 func (b *boodbood) Navigate(args []string) {
+	if len(args) > 0 && args[0] == "list" {
+		for i := 0; i < 10; i++ {
+			if i >= len(b.store.nodes) {
+				break
+			}
+
+			fmt.Println(b.store.nodes[i].Name(), "\t\t", b.store.nodes[i].path, "=>[ weight: ", b.store.nodes[i].weight, "]")
+		}
+		return
+	}
+
 	switch len(args) {
 	case 0:
 		help()
@@ -26,8 +43,9 @@ func (b *boodbood) Navigate(args []string) {
 	case 1:
 		stat, err := os.Stat(args[0])
 		if os.IsNotExist(err) {
-			fmt.Println("boodbood:", args[0], "does not exist")
-			os.Exit(0)
+			b.getMatch(args[0])
+
+			return
 		}
 
 		if !stat.IsDir() {
@@ -35,15 +53,26 @@ func (b *boodbood) Navigate(args []string) {
 			os.Exit(0)
 		}
 
-		runContent := "#!/bin/zsh\ncd " + args[0] + "\n"
-		_ = os.WriteFile(b.actionFile, []byte(runContent), 0644)
+		b.getMatch(args[0])
+		return
+	}
+}
 
-		wd, _ := os.Getwd()
-		if err := b.store.Visit(wd + "/" + args[0]); err != nil {
-			_ = fmt.Errorf("Error visiting node: %v", err)
-			os.Exit(1)
+func (b *boodbood) navigateTo(identifier string) {
+	runContent := "#!/bin/zsh\ncd " + identifier + "\n"
+	_ = os.WriteFile(b.actionFile, []byte(runContent), 0644)
+	_ = b.store.Visit(identifier)
+}
+
+func (b *boodbood) getMatch(identifier string) {
+	for _, node := range b.store.nodes {
+		if strings.Contains(node.Name(), identifier) {
+			b.navigateTo(node.path)
+			return
 		}
 	}
+
+	_, _ = fmt.Println("no matches found for:", identifier)
 }
 
 func help() {
