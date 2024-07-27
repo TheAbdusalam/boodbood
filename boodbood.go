@@ -51,6 +51,8 @@ func (b *boodbood) Navigate(args []string) {
 		if !stat.IsDir() {
 			fmt.Println("boodbood:", args[0], "is not a directory")
 			os.Exit(0)
+		} else {
+			b.navigateTo(args[0])
 		}
 
 		if strings.Contains(args[0], "/") {
@@ -59,20 +61,21 @@ func (b *boodbood) Navigate(args []string) {
 			return
 		}
 
-		b.getMatch(args[0] + "/")
+		b.getMatch(args[0])
 		return
 	}
 }
 
 func (b *boodbood) navigateTo(identifier string) {
-	runContent := "#!/bin/zsh\ncd " + identifier + "\n"
+	runContent := "#!/bin/zsh\ncd " + identifier + "/\n"
 	_ = os.WriteFile(b.actionFile, []byte(runContent), 0644)
 	_ = b.store.Visit(identifier)
 }
 
 func (b *boodbood) getMatch(identifier string) {
+	identifier = strings.ToLower(identifier)
 	for _, node := range b.store.nodes {
-		if strings.Contains(node.Name(), identifier) {
+		if strings.Contains(strings.ToLower(node.Name()), identifier) {
 			b.navigateTo(node.path)
 			return
 		}
