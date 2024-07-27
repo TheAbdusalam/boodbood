@@ -59,7 +59,7 @@ func (b *boodbood) Navigate(args []string) {
 			return
 		}
 
-		b.getMatch(args[0])
+		b.getMatch(args[0] + "/")
 		return
 	}
 }
